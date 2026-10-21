@@ -98,45 +98,33 @@ function buildIndustryPage(ind){
   if(!data||!data[ind])return '<div class="page" style="text-align:center;padding:60px;color:#999">暂无该考核期数据</div>';
   const info=data[ind];
   const hasSubModules=info.sub_modules&&Object.keys(info.sub_modules).length>0;
+  const visibleCount=hasSubModules?Object.values(info.sub_modules).reduce((sum,agents)=>sum+agents.length,0):(info.agents||[]).length;
   let html=`<div class="page">
-    <div class="ind-hd"><h2>${IND_ICONS[ind]} ${IND_LABELS[ind]}</h2><span class="badge-stat">参评 ${info.total_nk} 家 · 达标 ${info.passed} · 潜力 ${info.potential}</span></div>`;
+    <div class="ind-hd"><h2>${IND_ICONS[ind]} ${IND_LABELS[ind]}</h2><span class="badge-stat">代理 ${visibleCount} 家</span></div>`;
   if(hasSubModules){
     const moduleIcons={'少儿兴趣硬件图书':'🧸','学科教育':'📚','语言留学':'🌍','成人职业兴趣':'💼'};
     for(const [moduleName,moduleAgents] of Object.entries(info.sub_modules)){
       const icon=moduleIcons[moduleName]||'📋';
-      const mp=moduleAgents.filter(a=>a.category==='达标');
-      const mt=moduleAgents.filter(a=>a.category==='潜力');
-      const mo=moduleAgents.filter(a=>a.category!=='达标'&&a.category!=='潜力');
-      html+=`<div style="margin-bottom:24px"><div class="sec-label" style="color:#1a1a1a;font-size:14px;border-bottom:1px solid #e8e3db;padding-bottom:8px">${icon} ${moduleName} <span style="font-size:11px;color:#999;font-weight:400;margin-left:6px">推荐 ${moduleAgents.length} 家</span></div>`;
-      if(mp.length)html+=`<div class="sec-label green" style="margin-top:12px">✅ 优质代理 ${mp.length} 家</div><div class="agent-grid">${mp.map(a=>cardHtml(a)).join('')}</div>`;
-      if(mt.length)html+=`<div class="sec-label amber"> 潜力代理 ${mt.length} 家</div><div class="agent-grid">${mt.map(a=>cardHtml(a)).join('')}</div>`;
-      if(mo.length)html+=`<div class="sec-label gray">— 其他代理 ${mo.length} 家</div><div class="agent-grid">${mo.map(a=>cardHtml(a)).join('')}</div>`;
+      const sortedAgents=[...moduleAgents].sort((a,b)=>a.name.localeCompare(b.name,'zh-CN'));
+      html+=`<div style="margin-bottom:24px"><div class="sec-label" style="color:#1a1a1a;font-size:14px;border-bottom:1px solid #e8e3db;padding-bottom:8px">${icon} ${moduleName} <span style="font-size:11px;color:#999;font-weight:400;margin-left:6px">代理 ${moduleAgents.length} 家</span></div>`;
+      html+=`<div class="agent-grid">${sortedAgents.map(a=>cardHtml(a)).join('')}</div>`;
       html+=`</div>`;
     }
   }else{
-    const agents=info.agents||[];
-    const passed=agents.filter(a=>a.category==='达标');
-    const potential=agents.filter(a=>a.category==='潜力');
-    const other=agents.filter(a=>a.category!=='达标'&&a.category!=='潜力');
-    if(passed.length)html+=`<div class="sec-label green">✅ 优质代理 ${passed.length} 家</div><div class="agent-grid">${passed.map(a=>cardHtml(a)).join('')}</div>`;
-    if(potential.length)html+=`<div class="sec-label amber"> 潜力代理 ${potential.length} 家</div><div class="agent-grid">${potential.map(a=>cardHtml(a)).join('')}</div>`;
-    if(other.length)html+=`<div class="sec-label gray">— 其他代理 ${other.length} 家</div><div class="agent-grid">${other.map(a=>cardHtml(a)).join('')}</div>`;
+    const agents=[...(info.agents||[])].sort((a,b)=>a.name.localeCompare(b.name,'zh-CN'));
+    html+=`<div class="agent-grid">${agents.map(a=>cardHtml(a)).join('')}</div>`;
   }
   html+=`</div>`;
   return html;
 }
 
 function cardHtml(a){
-  const borderCol=a.category==='达标'?'#10b981':a.category==='潜力'?'#f59e0b':'#e5e7eb';
-  const badgeBg=a.category==='达标'?'#ecfdf5':a.category==='潜力'?'#fffbeb':'#f3f4f6';
-  const badgeCol=a.category==='达标'?'#059669':a.category==='潜力'?'#d97706':'#6b7280';
-  const badgeIcon=a.category==='达标'?'✓':a.category==='潜力'?'⚡':'—';
-  const badgeTxt=a.category==='达标'?'达标':a.category==='潜力'?'潜力':'';
+  const borderCol='#dbe3ec';
   const tagsHtml=a.tags&&a.tags.length?'<span style="background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;margin-left:6px">'+a.tags.join(' ')+'</span>':'';
   const logoHtml=a.logo?'<img src="'+a.logo+'" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:6px;background:#fafafa;padding:3px;margin-right:12px;flex-shrink:0">':'<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-right:12px;flex-shrink:0">'+a.name.charAt(0)+'</div>';
   const introId='intro_'+a.name.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g,'');
   const introSection=a.intro?'<div style="margin-bottom:12px"><div id="'+introId+'" style="font-size:12.5px;color:#555;line-height:1.7;max-height:56px;overflow:hidden;transition:max-height 0.3s ease">'+a.intro+'</div><button onclick="toggleIntro(\''+introId+'\',this)" style="background:none;border:none;color:#2563eb;cursor:pointer;font-size:12px;padding:2px 0;margin-top:2px;font-weight:500">展开全部</button></div>':'';
-  const dimsHtml=a.passed_dims&&a.passed_dims.length?'<div style="margin-top:14px"><div style="font-size:11px;color:#999;margin-bottom:6px;font-weight:600;letter-spacing:0.5px">达标维度</div><div style="display:flex;flex-wrap:wrap;gap:5px">'+a.passed_dims.map(function(d){return '<span style="background:#f0f9ff;color:#0369a1;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:500;border:1px solid #e0f2fe">'+d+'</span>'}).join('')+'</div></div>':'';
+  const dimsHtml=a.passed_dims&&a.passed_dims.length?'<div style="margin-top:14px"><div style="font-size:11px;color:#999;margin-bottom:6px;font-weight:600;letter-spacing:0.5px">评估维度</div><div style="display:flex;flex-wrap:wrap;gap:5px">'+a.passed_dims.map(function(d){return '<span style="background:#f0f9ff;color:#0369a1;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:500;border:1px solid #e0f2fe">'+d+'</span>'}).join('')+'</div></div>':'';
   const btnStyle='display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid #e5e7eb;background:#fafafa;color:#6b7280;text-decoration:none;border-radius:8px;font-size:12px;font-weight:500;transition:all 0.2s ease';
   const btnHover='this.style.background=\'#f3f4f6\';this.style.borderColor=\'#d1d5db\';this.style.color=\'#374151\'';
   const btnOut='this.style.background=\'#fafafa\';this.style.borderColor=\'#e5e7eb\';this.style.color=\'#6b7280\'';
@@ -153,7 +141,7 @@ function cardHtml(a){
   }
   const buttonsSection='<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">'+pdfBtn+caseBtns+'</div>';
   const contactHtml=a.contact?'<div style="margin-top:12px;padding-top:10px;border-top:1px solid #f5f5f5;font-size:11.5px;color:#888;line-height:1.7">'+a.contact+'</div>':'';
-  return '<div style="background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.04);border-left:3px solid '+borderCol+';transition:box-shadow 0.2s" onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,0.08)\'" onmouseout="this.style.boxShadow=\'0 1px 4px rgba(0,0,0,0.04)\'"><div style="display:flex;align-items:flex-start;margin-bottom:4px">'+logoHtml+'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#111;line-height:1.4;margin-bottom:4px">'+a.name+'</div></div><span style="background:'+badgeBg+';color:'+badgeCol+';padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0;margin-left:8px">'+badgeIcon+' '+badgeTxt+'</span>'+tagsHtml+'</div>'+introSection+dimsHtml+buttonsSection+contactHtml+'</div>';
+  return '<div style="background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,0.04);border-left:3px solid '+borderCol+';transition:box-shadow 0.2s" onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,0.08)\'" onmouseout="this.style.boxShadow=\'0 1px 4px rgba(0,0,0,0.04)\'"><div style="display:flex;align-items:flex-start;margin-bottom:4px">'+logoHtml+'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#111;line-height:1.4;margin-bottom:4px">'+a.name+'</div></div>'+tagsHtml+'</div>'+introSection+dimsHtml+buttonsSection+contactHtml+'</div>';
 }
 
 function toggleIntro(id,btn){
