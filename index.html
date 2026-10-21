@@ -105,13 +105,15 @@ function buildIndustryPage(ind){
     const moduleIcons={'少儿兴趣硬件图书':'🧸','学科教育':'📚','语言留学':'🌍','成人职业兴趣':'💼'};
     for(const [moduleName,moduleAgents] of Object.entries(info.sub_modules)){
       const icon=moduleIcons[moduleName]||'📋';
-      const sortedAgents=[...moduleAgents].sort((a,b)=>a.name.localeCompare(b.name,'zh-CN'));
+      const rank=c=>c==='达标'?0:(c==='潜力'?1:2);
+      const sortedAgents=[...moduleAgents].sort((a,b)=>rank(a.category)-rank(b.category));
       html+=`<div style="margin-bottom:24px"><div class="sec-label" style="color:#1a1a1a;font-size:14px;border-bottom:1px solid #e8e3db;padding-bottom:8px">${icon} ${moduleName} <span style="font-size:11px;color:#999;font-weight:400;margin-left:6px">代理 ${moduleAgents.length} 家</span></div>`;
       html+=`<div class="agent-grid">${sortedAgents.map(a=>cardHtml(a)).join('')}</div>`;
       html+=`</div>`;
     }
   }else{
-    const agents=[...(info.agents||[])].sort((a,b)=>a.name.localeCompare(b.name,'zh-CN'));
+    const rank=c=>c==='达标'?0:(c==='潜力'?1:2);
+    const agents=[...(info.agents||[])].sort((a,b)=>rank(a.category)-rank(b.category));
     html+=`<div class="agent-grid">${agents.map(a=>cardHtml(a)).join('')}</div>`;
   }
   html+=`</div>`;
